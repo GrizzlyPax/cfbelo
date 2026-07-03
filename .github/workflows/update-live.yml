@@ -1,0 +1,33 @@
+# Live 2026 mode (M4): fetch the week's results from CFBD and commit them.
+# Dispatch-only for now — uncomment the cron before Week 1 (late August 2026).
+# Requires the CFBD_API_KEY repository secret.
+name: Update live season data
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 12 * * 0'  # Sunday morning UTC — after Saturday's slate
+  #   - cron: '0 12 * * 2'  # Tuesday — late games, corrections, new rankings
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run update
+        env:
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
+      - name: Commit new results
+        run: |
+          git config user.name "cfbelo-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/seasons/
+          git diff --cached --quiet || git commit -m "data: weekly live update"
+          git push
