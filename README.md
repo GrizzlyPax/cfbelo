@@ -80,13 +80,13 @@ Key decision: the engine is pure functions over immutable committed game logs. A
 
 ## Data notes / known caveats
 
-- **Game-type classification is heuristic** (CFP rounds and CCGs are detected from CFBD's `notes` field). `npm run ingest` prints per-tier counts per season — eyeball them against reality (10 FBS CCGs/yr, 11 CFP games in 2024+, 2–3 CFP games 2014–2023) before trusting a backtest. This is the M1 sanity-check step.
+- **Game-type classification is two-pass and validated against 2014–2025.** CFBD's `notes` field only labels CFP games from 2017 and CCGs in 2022–2024, so `refineGameTypes()` adds structural rules: semifinals in the 4-team era are postseason games between final-committee top-4 teams; a CCG is the lone intra-conference game (teams table, not the unreliable `conferenceGame` flag) in a conference's final week (≥14), neutral-site tiebreak. Two 2020 COVID one-offs are hardcoded overrides. Detected CCG and CFP games were checked game-by-game against the historical record for all 12 seasons. `npm run ingest` prints per-tier counts to re-verify after any re-ingest.
 - The rivalry list in `data/rivalries.ts` is a curated first pass, not exhaustive.
 - Ties are dropped (none in FBS since 1995); incomplete and FCS-vs-FCS games too.
 
 ## Roadmap
 
-- [x] **M1 — Engine + CLI backtest** (this commit; historical ingest pending an API key)
+- [x] **M1 — Engine + CLI backtest + 2014–2025 historical dataset** (committed under `data/seasons/`)
 - [ ] **M2 — Rules Lab MVP:** static site (Vite + React), toggles/sliders, live-recomputed rankings + scorecard, UpcomingGames view with win prob + projected spread, graded on week advance
 - [ ] **M3 — Season Replay** (week scrubber, animated top 25) + config compare + shareable URLs
 - [ ] **M4 — Live 2026 mode:** weekly cron (workflow is in `.github/workflows/update-live.yml`, dispatch-only until the season), movement arrows, risers/fallers. Ship before Week 1, late August 2026

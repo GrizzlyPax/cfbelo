@@ -6,6 +6,14 @@
  * Get a key at https://collegefootballdata.com/key and export CFBD_API_KEY.
  */
 
+import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
+
+// Node's fetch ignores HTTPS_PROXY by default; honor it when present
+// (managed/CI environments). No-op when no proxy env vars are set.
+if (process.env.HTTPS_PROXY || process.env.https_proxy) {
+  setGlobalDispatcher(new EnvHttpProxyAgent());
+}
+
 const BASE_URL = 'https://apinext.collegefootballdata.com';
 
 /** Raw v2 /games row (fields we consume; the API returns more). */
