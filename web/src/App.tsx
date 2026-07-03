@@ -51,7 +51,12 @@ export default function App() {
 
   useEffect(() => {
     const query = `${serializeConfig(config)}&season=${season}&burnin=${burnIn}`;
-    history.replaceState(null, '', `?${query}`);
+    try {
+      history.replaceState(null, '', `?${query}`);
+    } catch {
+      // Sandboxed embeds (opaque origin) forbid history updates; the app
+      // still works, links just aren't self-updating there.
+    }
   }, [config, season, burnIn]);
 
   const result = useMemo(
@@ -60,10 +65,17 @@ export default function App() {
   );
 
   const copyLink = () => {
-    void navigator.clipboard.writeText(location.href).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+    const link = `${location.origin}${location.pathname}?${serializeConfig(config)}&season=${season}&burnin=${burnIn}`;
+    navigator.clipboard.writeText(link).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      },
+      () => {
+        // Clipboard unavailable (sandboxed embed / permission denied).
+        window.prompt('Copy this config link:', link);
+      },
+    );
   };
 
   return (
