@@ -1,4 +1,5 @@
 import type { GameRecord } from './season';
+import type { PollWeek } from './types';
 
 /**
  * Backtest scorecards. Decided in the design doc: the lab is neutral —
@@ -123,6 +124,26 @@ export function spearmanCorrelation(ranksA: number[], ranksB: number[]): number 
   }
   if (varA === 0 || varB === 0) return NaN;
   return cov / Math.sqrt(varA * varB);
+}
+
+/**
+ * Final committee ranking of the season, falling back to the last AP poll.
+ * This is the reference list the agreement scorecard compares against.
+ */
+export function finalReferenceRanking(polls: PollWeek[]): { source: string; ids: number[] } | null {
+  const weeks = [...polls].sort(
+    (a, b) =>
+      (a.seasonType === b.seasonType ? 0 : a.seasonType === 'regular' ? -1 : 1) || a.week - b.week,
+  );
+  for (const preferred of ['Playoff Committee Rankings', 'AP Top 25']) {
+    for (let i = weeks.length - 1; i >= 0; i--) {
+      const poll = weeks[i]!.polls.find((p) => p.poll === preferred);
+      if (poll && poll.ranks.length > 0) {
+        return { source: preferred, ids: poll.ranks.map((r) => r.teamId) };
+      }
+    }
+  }
+  return null;
 }
 
 export interface NarrativeMetrics {

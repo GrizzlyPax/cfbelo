@@ -31,9 +31,13 @@ Everything is a knob: the 600 divisor (vs chess's 400), per-tier importance valu
 ```bash
 npm install
 npm test                # engine test suite
+npm run dev             # the Rules Lab — http://localhost:5173, runs off committed data
 npm run demo-data       # generate synthetic seasons 2098–2099 (no API key needed)
 npm run backtest -- --season 2099 --burn-in 1 --preset fifa,classic-elo
 ```
+
+`npm run build` produces the static site in `dist/` — no server, each season
+lazy-loads as its own chunk.
 
 With a free [CFBD API key](https://collegefootballdata.com/key):
 
@@ -74,6 +78,10 @@ jobs/
   make-demo-season.ts  deterministic synthetic data for dev/tests
 cli/
   backtest.ts  final top 25 + both scorecards per config
+web/
+  src/data.ts  lazy per-season chunks via import.meta.glob
+  src/lab.ts   (seasons, config) -> everything the views render
+  src/components/  ConfigPanel, Rankings, Scorecards, UpcomingGames
 ```
 
 Key decision: the engine is pure functions over immutable committed game logs. A full 12-season backtest is a few hundred thousand arithmetic ops — trivially fast in the browser. Zero server. Everything is keyed on CFBD numeric team ids (name strings are inconsistent across sources). FCS opponents pool into one synthetic entity pinned at a low rating (configurable to track individually).
@@ -87,8 +95,8 @@ Key decision: the engine is pure functions over immutable committed game logs. A
 ## Roadmap
 
 - [x] **M1 — Engine + CLI backtest + 2014–2025 historical dataset** (committed under `data/seasons/`)
-- [ ] **M2 — Rules Lab MVP:** static site (Vite + React), toggles/sliders, live-recomputed rankings + scorecard, UpcomingGames view with win prob + projected spread, graded on week advance
-- [ ] **M3 — Season Replay** (week scrubber, animated top 25) + config compare + shareable URLs
+- [x] **M2 — Rules Lab MVP:** static site (Vite + React), toggles/sliders, live-recomputed rankings + scorecard, UpcomingGames view with win prob + projected spread, graded on week advance; configs round-trip through the URL (`?d=400&mov=1&hb=57&season=2024`)
+- [ ] **M3 — Season Replay** (week scrubber, animated top 25) + config compare
 - [ ] **M4 — Live 2026 mode:** weekly cron (workflow is in `.github/workflows/update-live.yml`, dispatch-only until the season), movement arrows, risers/fallers. Ship before Week 1, late August 2026
 - [ ] **M5 (stretch):** Monte Carlo playoff odds; Elo-to-spread vs Vegas closing lines (CFBD `/lines`)
 

@@ -9,9 +9,9 @@
  */
 import { readdir, readFile } from 'node:fs/promises';
 import { parseConfig, PRESETS, serializeConfig, type RuleConfig } from '../engine/config';
-import { agreementScorecard, narrativeMetrics, predictiveScorecard } from '../engine/metrics';
+import { agreementScorecard, finalReferenceRanking, narrativeMetrics, predictiveScorecard } from '../engine/metrics';
 import { runBacktest, topN } from '../engine/season';
-import type { PollWeek, SeasonData } from '../engine/types';
+import type { SeasonData } from '../engine/types';
 
 function parseArgs(argv: string[]): Map<string, string> {
   const args = new Map<string, string>();
@@ -48,23 +48,6 @@ async function loadSeasons(first: number, last: number): Promise<SeasonData[]> {
     seasons.push(JSON.parse(await readFile(new URL(`${year}.json`, dir), 'utf8')) as SeasonData);
   }
   return seasons;
-}
-
-/** Final committee ranking of the season (falls back to the last AP poll). */
-function finalReferenceRanking(polls: PollWeek[]): { source: string; ids: number[] } | null {
-  const weeks = [...polls].sort(
-    (a, b) =>
-      (a.seasonType === b.seasonType ? 0 : a.seasonType === 'regular' ? -1 : 1) || a.week - b.week,
-  );
-  for (const preferred of ['Playoff Committee Rankings', 'AP Top 25']) {
-    for (let i = weeks.length - 1; i >= 0; i--) {
-      const poll = weeks[i]!.polls.find((p) => p.poll === preferred);
-      if (poll && poll.ranks.length > 0) {
-        return { source: preferred, ids: poll.ranks.map((r) => r.teamId) };
-      }
-    }
-  }
-  return null;
 }
 
 const fmt = (n: number, digits = 4) => (Number.isNaN(n) ? 'n/a' : n.toFixed(digits));
